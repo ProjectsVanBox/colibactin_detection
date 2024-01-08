@@ -583,4 +583,3 @@ supp_figure_4 = ggarrange(plot_PTA$plot_list$supplementary_figure_4,
           nrow = 2, labels = c("A", "B"))
 ggsave("Output/Figures/Fig_S4.pdf", supp_figure_4, width = 8, height = 10)
 ggsave("Output/Figures/Fig_S4.png", supp_figure_4, width = 8, height = 10)
-
