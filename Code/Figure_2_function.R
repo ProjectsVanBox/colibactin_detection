@@ -573,7 +573,6 @@ fig_2 = annotate_figure(plot_PTA$total_plot, fig.lab  = "         PTA", fig.lab.
 ggsave("Output/Figures/Figure_2.pdf", fig_2, width = 15, height = 11.5)
 ggsave("Output/Figures/Figure_2.png", fig_2, width = 15, height = 11.5)
 
-
 plot_CE = plot_figures_2(contexts_TN_CE, cat = cat_CE, name = 'Clonal Expansion')
 fig_S3 = annotate_figure(plot_CE$total_plot, fig.lab  = "         Clonal Expansion", fig.lab.size = 15)
 ggsave("Output/Figures/Fig_S3.pdf", fig_S3, width = 12, height = 10)
