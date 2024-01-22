@@ -15,21 +15,26 @@ get_profile_labels = function(ext_context, TN_signature) {
     column_to_rownames("name") %>% 
     t() %>% as.data.frame()
   type_counts_all = type_counts_all[TRIPLETS_48,]
-  cosines_TN = sapply(type_counts_all, cos_sim, TN_signature) # get cosine similarities to SBS T>N fraction
+  cosines_TN = sapply(type_counts_all, cos_sim, TN_signature)
+  spearman_TN = sapply(type_counts_all, cor, TN_signature, method = "spearman") # get cosine similarities to SBS T>N fraction
   
   TN_trinuc_counts = context_counts %>% filter(select == "AA") %>% 
     dplyr::select(-select) %>% column_to_rownames("name") %>% 
     t() %>% as.data.frame()
   TN_trinuc_counts = TN_trinuc_counts[TRIPLETS_48,]
-  cosines_TN_AA = sapply(TN_trinuc_counts, cos_sim, TN_signature) %>% 
-    as.data.frame() %>% rownames_to_column("name")
-  colnames(cosines_TN_AA)[2] = "cs"
   
-  label_df = data.frame(name = factor(cosines_TN_AA$name, levels = cosines_TN_AA$name), 
-                        cosine = paste0("all T>N: ",
-                                       round(cosines_TN, 2), 
-                                       "\nT>N -3-4AA: ", 
-                                       round(cosines_TN_AA$cs, 2)))
+  cosines_TN_AA = sapply(TN_trinuc_counts, cos_sim, TN_signature)
+  spearman_TN_AA = sapply(TN_trinuc_counts, cor, TN_signature, method = "spearman") 
+  
+  label_df = data.frame(name = factor(names(cosines_TN), levels = names(cosines_TN)), 
+                        cosine_TN = cosines_TN,
+                        spearman_TN = spearman_TN,
+                        cosine_TN_AA = cosines_TN_AA,
+                        spearman_TN_AA = spearman_TN_AA, 
+                        label_cosine = paste0("all T>N: ", round(cosines_TN, 2),
+                                              "\nT>N -3-4AA: ", round(cosines_TN_AA, 2)),
+                        label_spearman = paste0(round(spearman_TN, 2), 
+                                       "\n", round(spearman_TN_AA, 2)))
   
   return(label_df)
 }

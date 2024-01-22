@@ -19,16 +19,20 @@ plot_figure_2 = function(cat, mut_mat, name){
   mut_counts = cat  %>% 
     mutate('SBS count' = colSums(mut_mat[, name]))
   
+  ktest = kruskal.test(`SBS count` ~ injection, data = mut_counts)
+  subtitle = paste0("Kruskal-Wallis p-value: ", round(ktest$p.value, 3))
+  
   F2a_sbs_boxplot = ggplot(mut_counts, aes(x = injection, y = `SBS count`, fill = injection)) + 
     geom_boxplot(outlier.shape = NA, width = 0.4) + 
     geom_jitter(shape = 21, width = 0.15) +  
-    geom_pwc(aes(group = injection), ref.group = "Control", dodge = 0.2, p.adjust.by = "panel", label = "{p.adj.format}", p.adjust.method = "fdr") + 
-    ggtitle(name)  +
+    geom_pwc(aes(group = injection), dodge = 0.2, method = "dunn_test",
+             p.adjust.by = "panel", label = "{p.adj.format}", p.adjust.method = "fdr") + 
     scale_fill_manual(values = c("#545863", "#00e8fc", "#f96e46", "#f9c846", "#ffe3e3")) +
+    scale_y_continuous(limits = c(0, max(mut_counts$`SBS count`)*1.45)) +
     theme_BM() + 
     theme(plot.title = element_text(hjust = 0.5, size = 11), legend.position = "none", 
           axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) +
-    xlab("") 
+    labs(title = name, subtitle = subtitle, x = "")
   
   mut_mat = mut_mat[,cat$name]
   # Plot 96-profiles 
@@ -52,22 +56,26 @@ plot_figure_2 = function(cat, mut_mat, name){
   
   # Save a table with the information per clone
   indel_mut_counts = indel_mut_counts %>% arrange(method, injection)
-  sjPlot::tab_df(indel_mut_counts, file = "../Manuscript/Figures/Supplementary_Table_1.doc")
+  sjPlot::tab_df(indel_mut_counts, file = "Output/Supplementary_tables/Supplementary_Table_1.doc")
   
   #  Plot indel counts and mutational profiles
   indel_mut_counts_plot = indel_mut_counts
+  
+  ktest_indels = kruskal.test(`indel count` ~ injection, indel_mut_counts_plot)
+  subtitle = paste0("Kruskal-Wallis p-value: ", round(ktest_indels$p.value, 3))
+  
   F2b_boxplot_indels = ggplot(indel_mut_counts_plot, aes(x = injection, y = `indel count`, fill = injection)) + 
     geom_boxplot(outlier.shape = NA, width = 0.4) + 
     geom_jitter(shape = 21, width = 0.15) +
-    geom_pwc(aes(group = injection),ref.group = "Control", 
+    geom_pwc(aes(group = injection), method = "dunn_test",
              dodge = 0.2, p.adjust.by = "panel", label = "{p.adj.format}", p.adjust.method = "fdr") + 
     scale_fill_manual(values = c("#545863", "#00e8fc", "#f96e46", "#f9c846", "#ffe3e3")) +
-    ggtitle("Indels")  +
+    scale_y_continuous(limits = c(0, max(indel_mut_counts$`indel count`)*1.45)) +
     theme_BM() +
     theme(plot.title = element_text(hjust = 0.5, size = 11),
           legend.position = "none",
           axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) +
-    xlab("")
+    labs(title = "Indels", subtitle = subtitle, x = "")
   
   # Plot indel profiles 
   indel_counts = indel_counts[, cat$name]
@@ -103,13 +111,19 @@ plot_figure_2 = function(cat, mut_mat, name){
     filter(Signature == "SBS88")
   fit_res_clones_sbs = merge(fit_res_clones_sbs, categories)
   
+  
+  ktest_refit = kruskal.test(value ~ injection, data = fit_res_clones_sbs)
+  subtitle = paste0("Kruskal-Wallis p-value: ", round(ktest_refit$p.value, 3))
+  
+  
   F2g_sbs_refit = ggplot(fit_res_clones_sbs, aes(x = injection, y = value, fill = injection,shape = method))  +
     geom_boxplot(aes(shape = NULL), outlier.shape = NA, width = 0.5) + 
     geom_jitter(shape = 21, width = 0.15, alpha = 0.8)  + 
     theme_BM() +
-    geom_pwc(aes(group = injection), ref.group	= "Control", p.adjust.method =  "fdr", label = "p.adj") +
+    geom_pwc(aes(group = injection), method = "dunn_test", p.adjust.method =  "fdr", label = "{p.adj.format}") +
     scale_fill_manual(values = c("#545863", "#00e8fc", "#f96e46", "#f9c846", "#ffe3e3")) +
-    ylab("Relative SBS88 contribution") + xlab("") +
+    scale_y_continuous(limits = c(0, max(fit_res_clones_sbs$value)*1.45)) +
+    labs( y = "Relative SBS88 contribution", x ="", subtitle = subtitle) +
     theme(legend.position =  "none", 
           axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
   F2g_sbs_refit
@@ -123,14 +137,19 @@ plot_figure_2 = function(cat, mut_mat, name){
     pivot_longer(cols = -Signature) %>% 
     filter(Signature == "ID18")
   fit_res_clones = merge(fit_res_clones, categories)
+
+  
+  ktest_refit = kruskal.test(value ~ injection, data = fit_res_clones)
+  subtitle = paste0("Kruskal-Wallis p-value: ", round(ktest_refit$p.value, 3))
   
   Fig2h_indel_refit = ggplot(fit_res_clones, aes(x = injection, y = value, fill = injection,shape = method))  +
     geom_boxplot(aes(shape = NULL), outlier.size = 0, width = 0.5) + 
     geom_jitter(shape = 21, width = 0.15, alpha = 0.8)  + 
     theme_BM() +
-    geom_pwc(aes(group = injection), ref.group	= "Control", p.adjust.method =  "fdr", label = "p.adj") +
+    geom_pwc(aes(group = injection), method = "dunn_test", p.adjust.method =  "fdr", label = "p.adj.format") +
     scale_fill_manual(values = c("#545863", "#00e8fc", "#f96e46", "#f9c846", "#ffe3e3")) +
-    ylab("Relative ID18 contribution") + xlab("") +
+    scale_y_continuous(limits = c(0, max(fit_res_clones$value)*1.35)) +
+    labs(subtitle = subtitle, y = "Relative ID18 contribution", x = "") +
     theme(legend.position =  "none", axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) 
   
   # patch all plots together
@@ -244,9 +263,9 @@ right_bottom = ggarrange(cos_mat_sbs, cos_mat_indel, labels = c('H', "I"), nrow 
 bottom = ggarrange(left_bottom, right_bottom, ncol = 2, widths = c(1,2))
 fig_S2 =  ggarrange(top, bottom,  ncol = 2)
 
-ggsave("C:/Users/Axel Rosendahl Huber/OneDrive/Nissle_manuscript/Nissle_September23/Figures/Fig_S2/Fig_S2_R.pdf", 
+ggsave("Output/Figures/Fig_S2_R.pdf", 
        fig_S2, width = 16, height = 9)
-ggsave("C:/Users/Axel Rosendahl Huber/OneDrive/Nissle_manuscript/Nissle_September23/Figures/Fig_S2/Fig_S2_R.png", 
+ggsave("Output/Figures/Fig_S2_R.png", 
        fig_S2, width = 16, height = 9)
 
 

@@ -15,7 +15,6 @@ source("Code/Functions/Utils.R")
 source("Code/Functions/Nissle_functions.R")
 
 # find a solution for the following lines of code - which scripts are really necessary?
-#source("C:/Users/Axel Rosendahl Huber/Documents/Shared/vanBoxtelLab (Groupfolder)/Projects/Axel/Nissle/Manuscript/Figures/Figure_2/Figure_2.R")
 
 contexts_TN = list()
 for (type in names(context_list)) {
@@ -44,7 +43,6 @@ for (type in unique(cat_PTA$injection)) {
   contexts_TN_PTA[[type]] = ctx_table
 }
 
-
 contexts_TN_CE = list()
 for (type in unique(cat_CE$injection)) {
   ctx_table= context_list[[type]] %>%
@@ -57,9 +55,9 @@ for (type in unique(cat_CE$injection)) {
 }
 
 # testing variables only:
- TN_contexts = contexts_TN_PTA
- cat = cat_PTA
- name = 'PTA'
+# TN_contexts = contexts_TN_PTA
+# cat = cat_PTA
+# name = 'PTA'
 
 
 TRIPLETS_48 = TRIPLETS_96[49:96]
@@ -79,19 +77,18 @@ plot_figures_2 = function(TN_contexts, cat, name) {
   # Idea by Cayetano - determine the cosine similarities of the AA profiles tot the SBS88 profile:
   # 1. compare to the total level of trinucleotides
   label_df = get_profile_labels(ext_context, SBS88_TN)
-  label_df[grep("Control", label_df$name), "cosine"] = paste0("cosine similarity to SBS88:\n", 
-                                                              label_df[grep("Control", label_df$name), "cosine"]) 
+  # add explaining text to the first row
+  label_df$label_cosine = paste0("SBS88:    cosine similarity\n", label_df$label_cosine)
+  label_df$label_spearman = paste0("spearman\n", label_df$label_spearman)
   
-  
-  ext_context %>% 
-    mutate(select =  fct_recode(select, "-3-4AA" = "AA"))
   plot_profile_absolute = function(mut_list) {
     
     mut_list %>% 
       mutate(select =  fct_recode(select, "-3-4AA" = "AA")) %>% 
       group_by(trinucleotide, select) %>% 
       ggplot(aes(x = trinucleotide, alpha = select, fill = type)) +
-      geom_bar(width = 0.7 ) + facet_grid(name ~ . , scales  = "free_y") + 
+      geom_bar(width = 0.7 ) +
+      facet_grid(name ~ . , scales  = "free_y") + 
       theme_BM() +   theme(axis.text.x = element_text(angle = 90, hjust = 1)) + 
       scale_alpha_manual(values = c(0.3, 1)) +
       scale_fill_manual(values = COLORS6[4:6]) + 
@@ -111,8 +108,11 @@ plot_figures_2 = function(TN_contexts, cat, name) {
   
   F3e_AA_context_profile = plot_profile_absolute(ext_context) +
     labs(alpha = "nucs at pos -3-4", fill = NULL) + 
-    ggpp::geom_text_npc(data = label_df, npcx = 0.9, npcy = 0.9,
-                        aes(label = cosine), size = 3, hjust = 1) +
+    ggpp::geom_text_npc(data = label_df, npcx = 0.98, npcy = 0.9,
+                        aes(label = label_spearman), size = 2.5, hjust = 1) +
+    ggpp::geom_text_npc(data = label_df, npcx = 0.85, npcy = 0.9,
+                       aes(label = label_cosine), size = 2.5, hjust = 1) + 
+  
     ggpp::geom_text_npc(data = label_df, npcx = 0.02, npcy = 0.9,
                         aes(label = name), size = 3.5, hjust = 0)
     
@@ -137,8 +137,10 @@ plot_figures_2 = function(TN_contexts, cat, name) {
     return(list(tmp))
   })  
   
-  sim_data = rbindlist(sim_list) %>% 
-      group_by(select, name, bin) %>% 
+  sim_contexts = rbindlist(sim_list) %>% 
+      group_by(select, name, bin) 
+  
+  sim_data = sim_contexts %>% 
       dplyr::count() %>% 
     pivot_wider(values_from = n, names_from = c(select)) %>% 
     ungroup() %>% 
@@ -220,8 +222,9 @@ plot_figures_2 = function(TN_contexts, cat, name) {
     ggtitle(name) + theme(legend.position = "none")
   simulation_plot
   
-  supplementary_figure_4 = simulation_plot / histogram_fisher
+  supplementary_figure_4 = simulation_plot
 
+  # figure 2D - test the p-values for the differet dinucleotides
   # test p-value for enrichment
   list = split(ext_context, ext_context$name)
   occurrence_mat = sapply(list, function(x) table(x$select))
@@ -259,16 +262,78 @@ plot_figures_2 = function(TN_contexts, cat, name) {
   numcols = sapply(fisher_table, is.numeric)
   
   print(fisher_table %>% filter(dinucs == "AA"))
-  fisher_table[,numcols] = -log10(fisher_table[,numcols]+ 1e-300) 
-  fisher_table_m = pivot_longer(fisher_table, cols = -dinucs)
+  fisher_table_m = pivot_longer(fisher_table, cols = -dinucs, values_to = "pval")
   
+  # make the fisher table for the simulated data
+  total_counts = table(ext_context$name) %>% 
+    as.data.frame() %>% 
+    `colnames<-`(c("injection", "total_muts"))
   
-  F3d_dinc_enrichment = ggplot(fisher_table_m, aes(x  =dinucs, y = value)) + geom_bar(stat = "identity") +
-    facet_grid(name ~. , scales =  "free_y")   + 
-    ylab("-log10 pvalue\nenrichment dinucleotide") + theme_classic() + 
+  simulated_counts = sim_list %>% 
+    rbindlist() %>% 
+    mutate(bin_index = ceiling(bin/5)) %>%
+    group_by(bin_index, injection, pos34) %>% 
+    dplyr::count() %>% 
+    pivot_wider(names_from = pos34, values_from = n, values_fill = 0)
+  
+  sim_cnts =left_join(simulated_counts, total_counts, by = "injection")    %>% 
+    ungroup() %>% 
+    as.data.table()
+  
+  fisher_result = list()
+  iterative_fisher = function(sim_counts) {
+    
+    sim_counts = sim_counts
+    for (sel_strain in unique(sim_counts$injection)[-3]) {
+      
+      print(sel_strain)
+      cnts_strain = sim_counts %>% 
+        filter(injection %in% c(sel_strain, "Control")) %>% 
+        mutate(injection = case_when(injection == sel_strain ~ "strain", 
+                                     .default = injection)) %>% 
+        arrange(bin_index, injection)
+      
+      for (sel_pos34 in unique(ext_context$pos34)) {
+        
+        print(sel_pos34)
+        cnts_sel = cnts_strain %>% 
+          dplyr::select(bin_index, injection, all_of(sel_pos34), total_muts)
+        colnames(cnts_sel)[3] = "selpos"
+        cnts_mat = cnts_sel %>% 
+          mutate(noselect = total_muts - selpos) %>% 
+          dplyr::select(-total_muts) %>% 
+          pivot_wider(names_from = injection, values_from = c(selpos, noselect)) %>% 
+          dplyr::select(selpos_strain, selpos_Control, noselect_strain, noselect_Control) %>% 
+          as.matrix()
+        
+        dt_pval = data.table(bin_index = 1:200, dinucs = sel_pos34, name = sel_strain)
+        dt_pval$pval = fisher_test = apply(cnts_mat, 1, \(x) 
+              fisher.test(matrix(x, nrow = 2), alternative = "greater")$p.value)
+        index = paste0(sel_pos34, sel_strain)
+        fisher_result[[index]] = dt_pval
+      }
+      
+    }
+    return(rbindlist(fisher_result))
+  }
+  
+  fisher_result_table = iterative_fisher(sim_cnts) %>% 
+    mutate(type = "simulation")
+  
+  fisher_table_m = fisher_table_m %>% 
+    mutate(type = "observed data")
+  
+  total_result = rbind(fisher_result_table %>% dplyr::select(-bin_index), fisher_table_m)
+  
+  F3d_dinc_enrichment = ggplot(total_result, aes(x = dinucs, y = -log10(pval), color = type)) + 
+    geom_jitter(stat = "identity", width = 0.1) +
     geom_hline(yintercept = -log10(0.05), color = "grey") + 
-    theme(axis.text.x = element_text(angle = 90, hjust = 1, size = 7)) + 
-    xlab('')
+    facet_grid(name ~ ., scales = "free_y") + 
+    scale_color_manual(values = c("black", "grey")) +
+    theme_classic() + 
+    theme(axis.text.x = element_text(angle = 90, hjust = 1, size = 7), 
+          legend.position = c(0.6, 0.97)) + 
+    labs(x = "", y = "-log10 pvalue\nenrichment dinucleotide", color = "")
   F3d_dinc_enrichment
   
   # plot the enrichment of samples at specific motifs: 
@@ -337,8 +402,8 @@ plot_figures_2 = function(TN_contexts, cat, name) {
   names(list_total_enrichments) = sapply(recode_names, paste0, collapse = " ")
   
   # combinations of two
-  temp_table = contexts %>% as.data.frame() %>% filter(exposure %in% c("EcC", "Control"))
-  colnames(temp_table)[1:21] = 1:21
+  test_contexts = contexts %>% as.data.frame() %>% filter(exposure %in% c("EcC", "Control"))
+  colnames(test_contexts)[1:21] = 1:21
   
   test_list = list()
   
@@ -346,31 +411,84 @@ plot_figures_2 = function(TN_contexts, cat, name) {
   test_table = data.frame(EcC = rep(NA, length(list_total_enrichments)))
   rownames(test_table) = names(list_total_enrichments)
   
+  sim_contexts_pattern = strsplit(sim_contexts$context,"") %>% unlist() %>% matrix(ncol = 21, byrow = T)
+  colnames(sim_contexts_pattern) = 1:21
+  sim_contexts_bases = cbind(sim_contexts_pattern, sim_contexts)  
+  sim_ctrl_contexts = sim_contexts_bases %>% dplyr::filter(name == "Control")
+  
+  pvalue_list = list()
   for (i in 1:length(list_total_enrichments)) {
-    
     nucs = list_total_enrichments[[i]]
+    name = names(list_total_enrichments)[[i]]
     pos = parse_number(nucs) %>% as.character()
     base = gsub(".*[0-9]", "", nucs)
     
-    base_check = temp_table[,pos] == base 
+    # 1. check for the observed data
+    base_check = test_contexts[,pos] == base 
     
     if (length(nucs) > 1 ) { 
       base_check %>% as.matrix()
       idx  = apply(base_check, 1,all)
     } else { idx = base_check}
     
-    motif_match = temp_table$exposure[idx] %>% table()
-    motif_nomatch = temp_table$exposure[!idx] %>% table()
-    
-
+    motif_match = test_contexts$exposure[idx] %>% table()
+    motif_nomatch = test_contexts$exposure[!idx] %>% table()
     mat = rbind(motif_nomatch, motif_match) %>% as.matrix()
     
     # fisher exact test for EcC vs control
     test_table[i,1] = fisher.test(mat[,c("Control", "EcC")], alternative = "greater")$p.value
     
-    # fisher exact test for EcN vs control
+    # 2. check for the simulated data
+    base_check = sim_ctrl_contexts[,pos] == base 
+    if (length(nucs) > 1 ) { 
+      base_check %>% as.matrix()
+      idx  = apply(base_check, 1,all)
+    } else { idx = base_check}
+    
+    motif_match = sim_ctrl_contexts[idx, c("name","bin")] %>% group_by(bin) %>% dplyr::count()
+    motif_nomatch = sim_ctrl_contexts[!idx, c("name","bin")] %>% group_by(bin) %>% dplyr::count()
+    motif = rbindlist(list(motif_match = motif_match, motif_nomatch = motif_nomatch), idcol = "motif") %>% 
+      pivot_wider(names_from = motif, values_from = n, values_fill = 0)
+    
+    pvals = vector("numeric", 200)
+    # perform the fisher test for the control data:
+    
+    motif$control_match = mat[2,1]
+    motif$control_nomatch = mat[1,1]
+  
+    # perform test for the total pvalue 
+    pvals = apply(motif, 1, \(x) fisher.test(matrix(x[-1], nrow =2), alternative = "greater")$p.value)
+    pvalue_list[[name]] = pvals 
+    # fisher exact test for simulation data vs control
     #test_table[i,2]  = fisher.test(mat[2:1,-3], alternative = "greater")$p.value
+    
   }
+  
+  test_tibble = test_table %>% 
+    rownames_to_column("context") %>% 
+    arrange(EcC)
+  observed_data = test_tibble %>% 
+    pivot_longer(EcC, names_to = "type", values_to = "pvalue")
+  
+  colnames(observed_data)
+  simulation_data = as.data.frame(pvalue_list) %>%
+    pivot_longer(cols = everything(), values_to = "pvalue", names_to = "context") %>%
+    mutate(context = rep(names(list_total_enrichments), 200),
+           type = "simulation")
+  
+  pval_contexts = rbind(observed_data, simulation_data) %>% 
+    mutate(context = factor(context, levels = test_tibble$context), 
+           `-log10 p-value` = -log10(pvalue))
+  
+  position_enrichment_plot = ggplot(pval_contexts, aes(x = context, y = `-log10 p-value`, color = type)) + geom_point() + 
+    theme_classic() + 
+    scale_y_continuous(expand = c(0, 3), limits = c(0, NA )) + 
+    theme(axis.text.x = element_blank(), axis.ticks.x = element_blank(),
+          axis.title.y = element_text(size = 11), 
+          plot.margin = margin(unit(c(5.5, 5.5, -5, 20), "points")), 
+          legend.position = c(0.7,0.7), legend.box.background = element_rect(color = "black")) + 
+    scale_color_manual(values = c("black", "grey"))
+    xlab("") 
   
   legend_mat = matrix('N', nrow = 6, ncol = 31) 
   colnames(legend_mat) = list_total_enrichments
@@ -393,7 +511,7 @@ plot_figures_2 = function(TN_contexts, cat, name) {
   position_enrichment = merge(test_table, legend_mat_m, by = "names")
 
   bases = ggplot(position_enrichment , aes(x = reorder(names, EcC), y = `base position`, fill = base)) + 
-    geom_tile(color = "white", size = 0.9 ) +
+    geom_tile(color = "white", linewidth = 0.9 ) +
     geom_text(aes(label = base ), color = "grey15", size = 2) + theme_minimal() + 
     scale_fill_manual(values = c("green", "grey", 'red')) + 
     theme(axis.title.y = element_text(size = 11),
@@ -406,15 +524,15 @@ plot_figures_2 = function(TN_contexts, cat, name) {
     scale_y_continuous(breaks = 6:0, labels = c(1:-5)) + 
     labs(fill = element_blank())
   
-  position_enrichment_plot = ggplot(test_table, aes(x  = reorder(names, EcC), y = -log10(EcC))) + 
-    geom_point() + 
-    ylab("-log10 pvalue") + theme_classic() + 
-    scale_y_continuous(expand = c(0, 3), limits = c(0, NA )) + 
-    theme(axis.text.x = element_blank(), axis.ticks.x = element_blank(),
-          axis.title.y = element_text(size = 11), 
-          plot.margin = margin(unit(c(5.5, 5.5, -5, 20), "points"))) + 
-    xlab("") 
-    
+  # position_enrichment_plot = ggplot(test_table, aes(x  = reorder(names, EcC), y = -log10(EcC))) + 
+  #   geom_point() + 
+  #   ylab("-log10 pvalue") + theme_classic() + 
+  #   scale_y_continuous(expand = c(0, 3), limits = c(0, NA )) + 
+  #   theme(axis.text.x = element_blank(), axis.ticks.x = element_blank(),
+  #         axis.title.y = element_text(size = 11), 
+  #         plot.margin = margin(unit(c(5.5, 5.5, -5, 20), "points"))) + 
+  #   xlab("") 
+  #   
   F3b_position_enrichment = position_enrichment_plot / plot_spacer() / bases + plot_layout(heights = c(0.75, -0.17, 1))
   F3b_position_enrichment
   
@@ -425,33 +543,69 @@ plot_figures_2 = function(TN_contexts, cat, name) {
   EcC_signature_ordered = signatures$Type[order(EcC_signature, decreasing = T)]
   EcC_signature_ordered = EcC_signature_ordered[substr(EcC_signature_ordered, 3,3) == "T"] # select only T>N mutations 
   
-  # combinations of tw
+  # combinations of two
   temp_table = contexts %>% filter(exposure %in% c("Control", "EcC")) %>% as.data.frame()
   colnames(temp_table)[1:21] = 1:21
-  test_table = data.frame(names = EcC_signature_ordered,  EcC = rep(NA, length(EcC_signature_ordered)))
+  test_table = data.frame(names = EcC_signature_ordered,  pval = rep(NA, length(EcC_signature_ordered)))
   
+  sim_contexts_ctrl_EcC = sim_contexts %>% filter(name %in% c("Control", "EcC"))
+  
+  sim_data = list()
   for (j in 1:length(EcC_signature_ordered)) {
-      
-      trinucs = EcC_signature_ordered[1:j]
-      trinucs_index = temp_table$trinucleotide %in% trinucs
-      AA_index = substr(temp_table$context, 7,8) == "AA"
-      idx = trinucs_index & AA_index
-      motif_match = temp_table$exposure[idx] %>% table()
-      motif_nomatch = temp_table$exposure[!idx] %>% table()
-      mat = rbind(motif_match, motif_nomatch)
-      
-      # fisher exact test for EcC vs control
-      test_table[j,2] = fisher.test(mat[,2:1], alternative = "greater",)$p.value
-    }
   
-  test_table$names = factor(test_table$names, levels = EcC_signature_ordered)
+    
+    print(j)
+    trinucs = EcC_signature_ordered[1:j]
+    trinucs_index = temp_table$trinucleotide %in% trinucs
+    AA_index = substr(temp_table$context, 7,8) == "AA"
+    idx = trinucs_index & AA_index
+    motif_match = temp_table$exposure[idx] %>% table()
+    motif_nomatch = temp_table$exposure[!idx] %>% table()
+    mat = rbind(motif_match, motif_nomatch)
+    
+    # fisher exact test for EcC vs control
+    test_table[j,2] = fisher.test(mat[,2:1], alternative = "greater",)$p.value
+    
+    # perform the same analysis for the simulated data
+    Ctrl_sim_muts = sim_contexts_ctrl_EcC %>% filter(name == "Control")
+    trinucs_index = Ctrl_sim_muts$trinucleotide %in% trinucs
+    AA_index = substr(Ctrl_sim_muts$context, 7,8) == "AA"
+    Ctrl_sim_muts$idx = trinucs_index & AA_index
+    Ctrl_sim_muts = Ctrl_sim_muts %>% 
+      mutate(idx = factor(idx, levels = c(TRUE, FALSE)))
+    
+    motif_match = Ctrl_sim_muts[  ,c("idx", "bin")] %>% table() %>% 
+      as.matrix() %>% t() %>%
+      as.data.frame.matrix() %>% as_tibble()
+    colnames(motif_match) = c("sim_match", "sim_nomatch")
+    motif_match = motif_match %>% 
+      mutate(obs_match = mat[1,1], obs_nomatch = mat[2,1])
+    
+    # TODO - simulate the p-value of Ctrl vs Ctrl
+    # TODO - simulate the p-value of sampled EcC vs Ctrl
+    
+    matrix(motif_match[1,], ncol =2, byrow = TRUE)
+    
+    pvals = apply(motif_match, 1, \(x) fisher.test(matrix(x, ncol = 2, byrow =TRUE), alternative = "greater")$p.value)  
+    nucleotide = test_table[j,"names"]
+    sim_data[[nucleotide]] = data.table(pval = pvals)
+  }
+
+  
+  sim_table = rbindlist(sim_data, idcol = "names") %>% 
+    mutate(type = "simulation")
+  test_table = test_table %>% 
+    mutate(names = factor(names, levels = EcC_signature_ordered),
+           type = "observed")
+  total_table = rbind(sim_table, test_table)
   
   # save the 17 trinucleotides in the data: 
-  write.table(test_table, "trinucs_selection.tsv", sep = "\t", row.names = F)
-  
-  F3f_stepwise_trinucs = ggplot(test_table, aes(x = names, y = -log10(EcC))) +
+  write.table(total_table, "trinucs_selection.tsv", sep = "\t", row.names = F)
+
+  F3f_stepwise_trinucs = ggplot(total_table, aes(x = names, y = -log10(pval), color = type)) +
     geom_point() +
     theme_BM() + 
+    scale_color_manual(values = c("black", "grey")) + 
     theme(axis.text.x = element_text(angle = 90, hjust = 1, size = 7)) + 
     xlab("Trinucleotide added")  + ylab("-log10 p-value\nenrichment -3-4AA")
   
@@ -583,3 +737,4 @@ supp_figure_4 = ggarrange(plot_PTA$plot_list$supplementary_figure_4,
           nrow = 2, labels = c("A", "B"))
 ggsave("Output/Figures/Fig_S4.pdf", supp_figure_4, width = 8, height = 10)
 ggsave("Output/Figures/Fig_S4.png", supp_figure_4, width = 8, height = 10)
+
