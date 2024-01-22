@@ -57,7 +57,7 @@ for (type in unique(cat_CE$injection)) {
 # testing variables only:
 # TN_contexts = contexts_TN_PTA
 # cat = cat_PTA
-# name = 'PTA'
+name = 'PTA'
 
 
 TRIPLETS_48 = TRIPLETS_96[49:96]
