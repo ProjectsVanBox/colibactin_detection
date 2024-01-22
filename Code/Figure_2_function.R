@@ -55,8 +55,8 @@ for (type in unique(cat_CE$injection)) {
 }
 
 # testing variables only:
-# TN_contexts = contexts_TN_PTA
-# cat = cat_PTA
+TN_contexts = contexts_TN_PTA
+cat = cat_PTA
 name = 'PTA'
 
 
@@ -89,12 +89,12 @@ plot_figures_2 = function(TN_contexts, cat, name) {
       ggplot(aes(x = trinucleotide, alpha = select, fill = type)) +
       geom_bar(width = 0.7 ) +
       facet_grid(name ~ . , scales  = "free_y") + 
-      theme_BM() +   theme(axis.text.x = element_text(angle = 90, hjust = 1)) + 
+      theme_BM()  + 
       scale_alpha_manual(values = c(0.3, 1)) +
       scale_fill_manual(values = COLORS6[4:6]) + 
       theme(legend.position = c(0.4, .98), legend.direction = "horizontal", 
             legend.box = "horizontal", 
-            axis.text.x = element_text(size= 6.5, angle = 90, vjust = 0, hjust = 1, family = "mono" ),
+            axis.text.x = element_text(size= 6.5, angle = 90, vjust = 0.5, hjust=1),
             legend.box.background = element_rect(colour = "black", fill = NA), 
             legend.background =element_blank(),
             legend.text = element_text(size=7),
@@ -331,8 +331,8 @@ plot_figures_2 = function(TN_contexts, cat, name) {
     facet_grid(name ~ ., scales = "free_y") + 
     scale_color_manual(values = c("black", "grey")) +
     theme_classic() + 
-    theme(axis.text.x = element_text(angle = 90, hjust = 1, size = 7), 
-          legend.position = c(0.6, 0.97)) + 
+    theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1, size = 7), 
+          legend.position = c(0.6, 0.95), legend.direction="horizontal", legend.background = element_blank() ) + 
     labs(x = "", y = "-log10 pvalue\nenrichment dinucleotide", color = "")
   F3d_dinc_enrichment
   
@@ -350,7 +350,7 @@ plot_figures_2 = function(TN_contexts, cat, name) {
     theme_classic() +  panel_border()  + 
     scale_y_continuous(expand = c(0, 0), limits = c(0,0.75), breaks = seq(0, 0.75, 0.25)) + 
     scale_fill_manual(values = c("darkgreen", "gray30")) + 
-    theme(axis.text.x = element_text(angle = 90, hjust = 1, size = 5 ), 
+    theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1,  size = 6 ), 
           strip.text.x = element_text(size = 7),
           legend.position = "none", panel.spacing.x = unit(1, units = "mm"))  +
     ylab("relative frequency") + xlab("")
@@ -379,7 +379,7 @@ plot_figures_2 = function(TN_contexts, cat, name) {
     theme_BM() + 
     theme( strip.background = element_blank(),
                         strip.text.x = element_blank(),
-           axis.text.x = element_text(size = 6, angle = 90, hjust = 1),
+           axis.text.x = element_text(size = 6, angle = 90, vjust = 0.5, hjust=1),
            plot.margin = margin(20, 8, 8, 8, unit = "pt"))
   F3a_seqlogo_plots
   
@@ -485,10 +485,10 @@ plot_figures_2 = function(TN_contexts, cat, name) {
     scale_y_continuous(expand = c(0, 3), limits = c(0, NA )) + 
     theme(axis.text.x = element_blank(), axis.ticks.x = element_blank(),
           axis.title.y = element_text(size = 11), 
-          plot.margin = margin(unit(c(5.5, 5.5, -5, 20), "points")), 
+          plot.margin = margin(unit(c(5.5, 5.5, 0, 20), "points")), 
           legend.position = c(0.7,0.7), legend.box.background = element_rect(color = "black")) + 
-    scale_color_manual(values = c("black", "grey"))
-    xlab("") 
+    scale_color_manual(values = c("black", "grey")) + 
+    xlab(NULL)
   
   legend_mat = matrix('N', nrow = 6, ncol = 31) 
   colnames(legend_mat) = list_total_enrichments
@@ -520,7 +520,7 @@ plot_figures_2 = function(TN_contexts, cat, name) {
           axis.title.x = element_blank(),
           plot.margin = margin(unit(c(-5, 5.5, 5.5, 20), "points")),
           legend.position = "none") + 
-    ylab("base position") + 
+    ylab("base position") +
     scale_y_continuous(breaks = 6:0, labels = c(1:-5)) + 
     labs(fill = element_blank())
   
@@ -606,7 +606,7 @@ plot_figures_2 = function(TN_contexts, cat, name) {
     geom_point() +
     theme_BM() + 
     scale_color_manual(values = c("black", "grey")) + 
-    theme(axis.text.x = element_text(angle = 90, hjust = 1, size = 7)) + 
+    theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1,  size = 7)) + 
     xlab("Trinucleotide added")  + ylab("-log10 p-value\nenrichment -3-4AA")
   
   # conclusion: 17 most frequently occuring trinucleotides is the best value. 
