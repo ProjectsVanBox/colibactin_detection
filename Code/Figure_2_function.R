@@ -126,7 +126,7 @@ plot_figures_2 = function(TN_contexts, cat, name) {
   # 'Monte Carlo histogram plotting: 
   # see if it is possible to perform thousand of T-tests to empirically validate the mutagenic activity:
   names = levels(ext_context$name)[1:length(unique(ext_context$name))]
-  sim_list = mapply(1:1000, names, FUN = \(i,n) {
+  sim_list = mapply(1:(200 * length(names)), names, FUN = \(i,n) {
     print(i)
     n_observed = sum(ext_context$name == n)
     tmp = ext_context %>% 
@@ -271,7 +271,7 @@ plot_figures_2 = function(TN_contexts, cat, name) {
   
   simulated_counts = sim_list %>% 
     rbindlist() %>% 
-    mutate(bin_index = ceiling(bin/5)) %>%
+    mutate(bin_index = ceiling(bin/length(names))) %>%
     group_by(bin_index, injection, pos34) %>% 
     dplyr::count() %>% 
     pivot_wider(names_from = pos34, values_from = n, values_fill = 0)
@@ -282,9 +282,9 @@ plot_figures_2 = function(TN_contexts, cat, name) {
   
   fisher_result = list()
   iterative_fisher = function(sim_counts) {
-    
-    sim_counts = sim_counts
-    for (sel_strain in unique(sim_counts$injection)[-3]) {
+  
+  strains_test = unique(sim_counts %>% filter(injection != "Control") %>% pull(injection))
+  for (sel_strain in strains_test) {
       
       print(sel_strain)
       cnts_strain = sim_counts %>% 
@@ -332,7 +332,7 @@ plot_figures_2 = function(TN_contexts, cat, name) {
     scale_color_manual(values = c("black", "grey")) +
     theme_classic() + 
     theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1, size = 7), 
-          legend.position = c(0.6, 0.95), legend.direction="horizontal", legend.background = element_blank() ) + 
+          legend.position = c(0.6, 0.95), legend.direction="horizontal", legend.background = element_blank(), legend.text = element_text(size = 7), legend.key.size = unit(2, units = "mm")) + 
     labs(x = "", y = "-log10 pvalue\nenrichment dinucleotide", color = "")
   F3d_dinc_enrichment
   
@@ -703,7 +703,7 @@ plot_figures_2 = function(TN_contexts, cat, name) {
   left = ggarrange(F3a_seqlogo_plots, ggarrange(F3c_dinuc_frequencies,  F3d_dinc_enrichment, widths = c(1.5 ,1), labels = c("C", "D")), 
                    nrow = 2,  heights = c(1.8, 1), labels = c("A", ""))
   right = ggarrange(F3b_position_enrichment, F3e_AA_context_profile,nrow = 2, heights = c(1,2.2), labels = c("B", "E"))
-  top = ggarrange(left, right, widths = c(1,1))
+  top = ggarrange(left, right, widths = c(1.3,1))
   total_plot = ggarrange(top, ggarrange(F3f_stepwise_trinucs, F3g_mixture_plot_EcN, labels = c("F", "G")), nrow = 2, heights = c(2.5,1))
   
   
