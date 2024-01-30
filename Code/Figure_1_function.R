@@ -35,6 +35,7 @@ plot_figure_2 = function(cat, mut_mat, name){
     labs(title = name, subtitle = subtitle, x = "")
   
   mut_mat = mut_mat[,cat$name]
+  
   # Plot 96-profiles 
   # Make mutation matrices & plot mutation profiles for I3 and PTA-sequenced clones
   mm = t(mut_mat) %>% data.table(keep.rownames = "name")
@@ -148,7 +149,7 @@ plot_figure_2 = function(cat, mut_mat, name){
     theme_BM() +
     geom_pwc(aes(group = injection), method = "dunn_test", p.adjust.method =  "fdr", label = "p.adj.format") +
     scale_fill_manual(values = c("#545863", "#00e8fc", "#f96e46", "#f9c846", "#ffe3e3")) +
-    scale_y_continuous(limits = c(0, max(fit_res_clones$value)*1.35)) +
+    scale_y_continuous(limits = c(0, max(fit_res_clones$value)*1.30)) +
     labs(subtitle = subtitle, y = "Relative ID18 contribution", x = "") +
     theme(legend.position =  "none", axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) 
   
@@ -159,7 +160,6 @@ plot_figure_2 = function(cat, mut_mat, name){
   
   # Rebuttal figure 2: Mutational loads for signatures in absolute counts
   fit_res_clones = fit_res_id$contribution %>% 
-    #  prop.table(2) %>% 
     as.data.frame() %>% rownames_to_column("Signature") %>% 
     pivot_longer(cols = -Signature) %>% 
     filter(Signature == "ID18")
@@ -195,8 +195,6 @@ plot_figure_2 = function(cat, mut_mat, name){
     ggtitle("singe base substitutions") 
 
   # alternative figure 2
-
-
   left = ggarrange(F2a_sbs_boxplot, F2b_boxplot_indels, labels = c("B", "C"), nrow = 2)
   middle = ggarrange(F2c_sbs_profile, F2d_indel_profile, labels = c("D", "E"),  nrow = 2)
   right = ggarrange(F2g_sbs_refit, Fig2h_indel_refit, labels = c("F", "G"), nrow = 2)
@@ -267,6 +265,3 @@ ggsave("Output/Figures/Fig_S2_R.pdf",
        fig_S2, width = 16, height = 9)
 ggsave("Output/Figures/Fig_S2_R.png", 
        fig_S2, width = 16, height = 9)
-
-
-

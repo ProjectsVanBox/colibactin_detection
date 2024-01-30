@@ -124,47 +124,48 @@ for (name in names(context_list)) {
 # Hartwig mutational re-fitting data 
 ####################################
 
-# NOTE: This script uses patient-level somatic variant and clinical data which have been obtained from the Hartwig Medical Foundation under the data request number DR-084. Somatic variant and clinical data are freely available for academic use from the Hartwig Medical Foundation through standardized procedures. Privacy and publication policies, including co-authorship policies, can be retrieved from: https://www.hartwigmedicalfoundation.nl/en/data-policy/. 
+# NOTE: This part of the script uses patient-level somatic variant and clinical data which have been obtained from the Hartwig Medical Foundation under the data request number DR-084. Somatic variant and clinical data are freely available for academic use from the Hartwig Medical Foundation through standardized procedures. Privacy and publication policies, including co-authorship policies, can be retrieved from: https://www.hartwigmedicalfoundation.nl/en/data-policy/. 
 # Data request forms can be downloaded from https://www.hartwigmedicalfoundation.nl/en/applying-for-data/.
 # To gain access to the data, this data request form should be emailed to info@hartwigmedicalfoundation.nl., upon which it will be evaluated within 6 weeks by the HMF Scientific Council and an independent Data Access Board.
 # When access is granted, the requested data become available through a download link provided by HMF.
 
-id_signatures = read_delim("https://cancer.sanger.ac.uk/signatures/documents/451/COSMIC_v3.2_ID_GRCh37.txt") 
-signatures = read_delim("https://cancer.sanger.ac.uk/signatures/documents/453/COSMIC_v3.2_SBS_GRCh38.txt") %>% 
-  arrange(match(Type, TRIPLETS_96))
-artefact_signatures = c("SBS27", "SBS43","SBS45","SBS46", "SBS47","SBS48","SBS49","SBS50","SBS51","SBS52",'SBS53',"SBS54",'SBS55','SBS56','SBS57','SBS58','SBS59','SBS60')
-sigs = signatures[,!colnames(signatures) %in% artefact_signatures] # remove signatures marked as artefacts
-
-# load HMF data (exome and whole genome) 
-mm_HMF = read.delim("C:/Users/Axel Rosendahl Huber/Documents/Shared/vanBoxtelLab (Groupfolder)/Projects/Axel/Nissle/Analysis/New_HMF/20210614_HMF_sbs_matrix_somatics.tsv") 
-mm_HMF_exome = fread("C:/Users/Axel Rosendahl Huber/Documents/Shared/vanBoxtelLab (Groupfolder)/Projects/Axel/Nissle/Analysis/New_HMF/mm_exome.txt", data.table = F)
-select_HMF =  colnames(mm_HMF)[colSums(mm_HMF) > 100 ]  # remove all samples with mutation counts < 100
-mm_HMF = mm_HMF[, select_HMF]
-
-ids_HMF = read.delim("C:/Users/Axel Rosendahl Huber/Documents/Shared/vanBoxtelLab (Groupfolder)/Projects/Axel/Nissle/Analysis/New_HMF/20210614_HMF_indel_matrix_somatics.tsv")[,select_HMF]
-ids_HMF_exome = fread("C:/Users/Axel Rosendahl Huber/Documents/Shared/vanBoxtelLab (Groupfolder)/Projects/Axel/Nissle/Analysis/New_HMF/indel_counts_HMF_exome.txt", data.table = F)
-
-# remove all samples with no mutation counts in the exome in both indels and snvs
-sbsExSelect = colnames(mm_HMF_exome)[colSums(mm_HMF_exome) > 0]
-indelExSelect = colnames(ids_HMF_exome)[colSums(ids_HMF_exome) > 0]
-exome_select = intersect(intersect(sbsExSelect, indelExSelect), select_HMF)
-mm_HMF_exome = mm_HMF_exome[,exome_select]
-ids_HMF_exome = ids_HMF_exome[,exome_select]
-
-# HMF WGS refits 
-sbs_fit = fit_to_signatures(mm_HMF %>% as.matrix(), signatures[,-1] %>% as.matrix() ) 
-sbs_contri = prop.table(sbs_fit$contribution,2)
-
-id_fit = fit_to_signatures(ids_HMF, id_signatures[,-1] %>% as.matrix())
-id_contri = prop.table(id_fit$contribution,2)
-
-# HMF exome refits
-sbs_fit_exome = fit_to_signatures(mut_matrix = mm_HMF_exome %>% as.matrix(), signatures = signatures[,-1] %>% as.matrix() ) 
-sbs_contri_exome = prop.table(sbs_fit_exome$contribution,2)
-sbs_contri_exome %>% colSums() %>% is.na() %>% table()
-
-id_fit_exome = fit_to_signatures(ids_HMF_exome, id_signatures[,-1] %>% as.matrix())
-id_contri_exome = prop.table(id_fit_exome$contribution,2)
+# id_signatures = read_delim("https://cancer.sanger.ac.uk/signatures/documents/451/COSMIC_v3.2_ID_GRCh37.txt") 
+# signatures = read_delim("https://cancer.sanger.ac.uk/signatures/documents/453/COSMIC_v3.2_SBS_GRCh38.txt") %>% 
+#   arrange(match(Type, TRIPLETS_96))
+# artefact_signatures = c("SBS27", "SBS43","SBS45","SBS46", "SBS47","SBS48","SBS49","SBS50","SBS51","SBS52",'SBS53',"SBS54",'SBS55','SBS56','SBS57','SBS58','SBS59','SBS60')
+# sigs = signatures[,!colnames(signatures) %in% artefact_signatures] # remove signatures marked as artefacts
+# 
+# # load HMF data (exome and whole genome) 
+# HMF mut mat data can be generated using the read_vcfs_as_granges function from the package MutationalPatterns
+# mm_HMF = read.delim("C:/Users/Axel Rosendahl Huber/Documents/Shared/vanBoxtelLab (Groupfolder)/Projects/Axel/Nissle/Analysis/New_HMF/20210614_HMF_sbs_matrix_somatics.tsv") 
+# mm_HMF_exome = fread("C:/Users/Axel Rosendahl Huber/Documents/Shared/vanBoxtelLab (Groupfolder)/Projects/Axel/Nissle/Analysis/New_HMF/mm_exome.txt", data.table = F)
+# select_HMF =  colnames(mm_HMF)[colSums(mm_HMF) > 100 ]  # remove all samples with mutation counts < 100
+# mm_HMF = mm_HMF[, select_HMF]
+# 
+# ids_HMF = read.delim("C:/Users/Axel Rosendahl Huber/Documents/Shared/vanBoxtelLab (Groupfolder)/Projects/Axel/Nissle/Analysis/New_HMF/20210614_HMF_indel_matrix_somatics.tsv")[,select_HMF]
+# ids_HMF_exome = fread("C:/Users/Axel Rosendahl Huber/Documents/Shared/vanBoxtelLab (Groupfolder)/Projects/Axel/Nissle/Analysis/New_HMF/indel_counts_HMF_exome.txt", data.table = F)
+# 
+# # remove all samples with no mutation counts in the exome in both indels and snvs
+# sbsExSelect = colnames(mm_HMF_exome)[colSums(mm_HMF_exome) > 0]
+# indelExSelect = colnames(ids_HMF_exome)[colSums(ids_HMF_exome) > 0]
+# exome_select = intersect(intersect(sbsExSelect, indelExSelect), select_HMF)
+# mm_HMF_exome = mm_HMF_exome[,exome_select]
+# ids_HMF_exome = ids_HMF_exome[,exome_select]
+# 
+# # HMF WGS refits 
+# sbs_fit = fit_to_signatures(mm_HMF %>% as.matrix(), signatures[,-1] %>% as.matrix() ) 
+# sbs_contri = prop.table(sbs_fit$contribution,2)
+# 
+# id_fit = fit_to_signatures(ids_HMF, id_signatures[,-1] %>% as.matrix())
+# id_contri = prop.table(id_fit$contribution,2)
+# 
+# # HMF exome refits
+# sbs_fit_exome = fit_to_signatures(mut_matrix = mm_HMF_exome %>% as.matrix(), signatures = signatures[,-1] %>% as.matrix() ) 
+# sbs_contri_exome = prop.table(sbs_fit_exome$contribution,2)
+# sbs_contri_exome %>% colSums() %>% is.na() %>% table()
+# 
+# id_fit_exome = fit_to_signatures(ids_HMF_exome, id_signatures[,-1] %>% as.matrix())
+# id_contri_exome = prop.table(id_fit_exome$contribution,2)
 
 #########
 # Hartwig dinucleotide enrichments

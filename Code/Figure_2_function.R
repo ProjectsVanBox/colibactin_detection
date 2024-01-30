@@ -1,5 +1,5 @@
 # Figure 3 function
-# function to plot the analyses for figure 3 three times (for Nissle)
+# function to plot the analyses for figure 3 two times: For PTA-exposed samples and for Clonal expansion
 library(ggseqlogo)
 library(ggplot2)
 library(gtools)
@@ -14,8 +14,6 @@ source("Code/Load_data.R")
 source("Code/Functions/Utils.R")
 source("Code/Functions/Nissle_functions.R")
 
-# find a solution for the following lines of code - which scripts are really necessary?
-
 contexts_TN = list()
 for (type in names(context_list)) {
   ctx_table= context_list[[type]] %>%
@@ -25,9 +23,11 @@ for (type in names(context_list)) {
   contexts_TN[[type]] = ctx_table
 }
 
+# select only the PTA-samples
 cat_PTA = categories %>%
   filter(method == "PTA")
 
+# select only the clonal expansion-generated samples
 cat_CE = categories %>% 
   filter(method == "Clonal Expansion")
 cat_CE$injection = factor(cat_CE$injection, levels = c("Control", "EcN", "EcC"))
@@ -54,18 +54,16 @@ for (type in unique(cat_CE$injection)) {
   contexts_TN_CE[[type]] = ctx_table
 }
 
-# testing variables only:
-TN_contexts = contexts_TN_PTA
-cat = cat_PTA
-name = 'PTA'
-
+# testing variables only - uncomment if you want to test the individual lines in the plotting function
+# TN_contexts = contexts_TN_PTA
+# cat = cat_PTA
+# name = 'PTA'
 
 TRIPLETS_48 = TRIPLETS_96[49:96]
 SBS88_TN <- as.data.table(signatures) %>% dplyr::slice(49:96) %>% pull("SBS88")
 
 plot_figures_2 = function(TN_contexts, cat, name) {
   
-  # =====
   ####### -3 -4 2bp upstream motif 
   ext_context = rbindlist(TN_contexts, idcol = "name") %>% 
     mutate(pos34 =  substr(context, 7,8)) %>% 
@@ -74,12 +72,12 @@ plot_figures_2 = function(TN_contexts, cat, name) {
              factor(levels = c("other", "AA"))) %>% 
     mutate(name = name %>% factor(levels = levels(cat$injection)))
   
-  # Idea by Cayetano - determine the cosine similarities of the AA profiles tot the SBS88 profile:
   # 1. compare to the total level of trinucleotides
   label_df = get_profile_labels(ext_context, SBS88_TN)
-  # add explaining text to the first row
+  # Add the explaining label on the plot:
   label_df$label_cosine = paste0("SBS88:    cosine similarity\n", label_df$label_cosine)
   label_df$label_spearman = paste0("spearman\n", label_df$label_spearman)
+  label_df$label_pval = paste0("pval\n", label_df$label_pval)
   
   plot_profile_absolute = function(mut_list) {
     
@@ -92,7 +90,7 @@ plot_figures_2 = function(TN_contexts, cat, name) {
       theme_BM()  + 
       scale_alpha_manual(values = c(0.3, 1)) +
       scale_fill_manual(values = COLORS6[4:6]) + 
-      theme(legend.position = c(0.4, .98), legend.direction = "horizontal", 
+      theme(legend.position = "top",
             legend.box = "horizontal", 
             axis.text.x = element_text(size= 6.5, angle = 90, vjust = 0.5, hjust=1),
             legend.box.background = element_rect(colour = "black", fill = NA), 
@@ -101,7 +99,8 @@ plot_figures_2 = function(TN_contexts, cat, name) {
             legend.title = element_blank(),
             strip.background = element_blank(), 
             strip.text.y = element_blank(),
-            legend.key.size = unit(7, "points")) +
+            legend.key.size = unit(7, "points"),
+            plot.margin = margin(unit(c(3, 8, 8, 8), "points"))) +
       xlab("") + ylab("Mutation count")
     
   }
@@ -109,11 +108,12 @@ plot_figures_2 = function(TN_contexts, cat, name) {
   F3e_AA_context_profile = plot_profile_absolute(ext_context) +
     labs(alpha = "nucs at pos -3-4", fill = NULL) + 
     ggpp::geom_text_npc(data = label_df, npcx = 0.98, npcy = 0.9,
+                        aes(label = label_pval), size = 2.5, hjust = 1) +
+    ggpp::geom_text_npc(data = label_df, npcx = 0.88, npcy = 0.9,
                         aes(label = label_spearman), size = 2.5, hjust = 1) +
-    ggpp::geom_text_npc(data = label_df, npcx = 0.85, npcy = 0.9,
+    ggpp::geom_text_npc(data = label_df, npcx = 0.78, npcy = 0.9,
                        aes(label = label_cosine), size = 2.5, hjust = 1) + 
-  
-    ggpp::geom_text_npc(data = label_df, npcx = 0.02, npcy = 0.9,
+      ggpp::geom_text_npc(data = label_df, npcx = 0.02, npcy = 0.9,
                         aes(label = name), size = 3.5, hjust = 0)
     
   F3e_AA_context_profile
@@ -219,7 +219,9 @@ plot_figures_2 = function(TN_contexts, cat, name) {
     theme_BM() + 
     ylab("fraction AA") + 
     xlab("cosine similarity to SBS88") + 
-    ggtitle(name) + theme(legend.position = "none")
+    ggtitle(name) + 
+    theme(legend.position = "none", 
+          plot.margin = margin(unit(c(5.5, 5.5, 5.5, 5.5), "points")))
   simulation_plot
   
   supplementary_figure_4 = simulation_plot
@@ -332,7 +334,11 @@ plot_figures_2 = function(TN_contexts, cat, name) {
     scale_color_manual(values = c("black", "grey")) +
     theme_classic() + 
     theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1, size = 7), 
-          legend.position = c(0.6, 0.95), legend.direction="horizontal", legend.background = element_blank(), legend.text = element_text(size = 7), legend.key.size = unit(2, units = "mm")) + 
+          legend.position = c(0.6, 0.95), legend.direction="horizontal", 
+          legend.background = element_blank(), 
+          legend.text = element_text(size = 7),
+          legend.key.size = unit(2, units = "mm"),
+          plot.margin = margin(unit(c(3, 3, 3, 3), "points"))) + 
     labs(x = "", y = "-log10 pvalue\nenrichment dinucleotide", color = "")
   F3d_dinc_enrichment
   
@@ -352,7 +358,8 @@ plot_figures_2 = function(TN_contexts, cat, name) {
     scale_fill_manual(values = c("darkgreen", "gray30")) + 
     theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1,  size = 6 ), 
           strip.text.x = element_text(size = 7),
-          legend.position = "none", panel.spacing.x = unit(1, units = "mm"))  +
+          legend.position = "none", panel.spacing.x = unit(1, units = "mm"), 
+          plot.margin = margin(unit(c(3, 3, 3, 3), "points")))  +
     ylab("relative frequency") + xlab("")
   F3c_dinuc_frequencies
   
@@ -459,9 +466,6 @@ plot_figures_2 = function(TN_contexts, cat, name) {
     # perform test for the total pvalue 
     pvals = apply(motif, 1, \(x) fisher.test(matrix(x[-1], nrow =2), alternative = "greater")$p.value)
     pvalue_list[[name]] = pvals 
-    # fisher exact test for simulation data vs control
-    #test_table[i,2]  = fisher.test(mat[2:1,-3], alternative = "greater")$p.value
-    
   }
   
   test_tibble = test_table %>% 
@@ -488,7 +492,7 @@ plot_figures_2 = function(TN_contexts, cat, name) {
           plot.margin = margin(unit(c(5.5, 5.5, 0, 20), "points")), 
           legend.position = c(0.7,0.7), legend.box.background = element_rect(color = "black")) + 
     scale_color_manual(values = c("black", "grey")) + 
-    xlab(NULL)
+    xlab(NULL) + labs(color = NULL)
   
   legend_mat = matrix('N', nrow = 6, ncol = 31) 
   colnames(legend_mat) = list_total_enrichments
@@ -524,16 +528,7 @@ plot_figures_2 = function(TN_contexts, cat, name) {
     scale_y_continuous(breaks = 6:0, labels = c(1:-5)) + 
     labs(fill = element_blank())
   
-  # position_enrichment_plot = ggplot(test_table, aes(x  = reorder(names, EcC), y = -log10(EcC))) + 
-  #   geom_point() + 
-  #   ylab("-log10 pvalue") + theme_classic() + 
-  #   scale_y_continuous(expand = c(0, 3), limits = c(0, NA )) + 
-  #   theme(axis.text.x = element_blank(), axis.ticks.x = element_blank(),
-  #         axis.title.y = element_text(size = 11), 
-  #         plot.margin = margin(unit(c(5.5, 5.5, -5, 20), "points"))) + 
-  #   xlab("") 
-  #   
-  F3b_position_enrichment = position_enrichment_plot / plot_spacer() / bases + plot_layout(heights = c(0.75, -0.17, 1))
+   F3b_position_enrichment = position_enrichment_plot / plot_spacer() / bases + plot_layout(heights = c(0.75, -0.17, 1))
   F3b_position_enrichment
   
   ###### Perform fisher exact test for selected trinucleotide combinations 
@@ -553,8 +548,6 @@ plot_figures_2 = function(TN_contexts, cat, name) {
   sim_data = list()
   for (j in 1:length(EcC_signature_ordered)) {
   
-    
-    print(j)
     trinucs = EcC_signature_ordered[1:j]
     trinucs_index = temp_table$trinucleotide %in% trinucs
     AA_index = substr(temp_table$context, 7,8) == "AA"
@@ -581,9 +574,6 @@ plot_figures_2 = function(TN_contexts, cat, name) {
     motif_match = motif_match %>% 
       mutate(obs_match = mat[1,1], obs_nomatch = mat[2,1])
     
-    # TODO - simulate the p-value of Ctrl vs Ctrl
-    # TODO - simulate the p-value of sampled EcC vs Ctrl
-    
     matrix(motif_match[1,], ncol =2, byrow = TRUE)
     
     pvals = apply(motif_match, 1, \(x) fisher.test(matrix(x, ncol = 2, byrow =TRUE), alternative = "greater")$p.value)  
@@ -606,8 +596,11 @@ plot_figures_2 = function(TN_contexts, cat, name) {
     geom_point() +
     theme_BM() + 
     scale_color_manual(values = c("black", "grey")) + 
-    theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1,  size = 7)) + 
-    xlab("Trinucleotide added")  + ylab("-log10 p-value\nenrichment -3-4AA")
+    theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1,  size = 7), 
+          legend.position = c(0.8,0.4), legend.box.background = element_rect(color = 'black'),
+          plot.margin = margin(unit(c(5.5, 5.5, 5.5, 5.5), "points"))) + 
+    xlab("Trinucleotide added")  + ylab("-log10 p-value\nenrichment -3-4AA") + 
+    labs(color = NULL)
   
   # conclusion: 17 most frequently occuring trinucleotides is the best value. 
   # fisher test for these values for EcN 
@@ -685,7 +678,8 @@ plot_figures_2 = function(TN_contexts, cat, name) {
           panel.spacing.x = unit(0.1, "lines"),
           strip.text.x = element_text(size = 9),
           axis.title.x = element_text(size = 12), 
-          axis.title.y = element_text(size = 11)) + 
+          axis.title.y = element_text(size = 11),
+          plot.margin = margin(unit(c(5.5, 5.5, 5.5, 5.5), "points"))) + 
     xlab("fraction Control/EcC mutations (1% difference/step)                 ") + 
     ylab("-3-4AA enrichment\nodds ratio(Fisher test)") +
     theme()
@@ -708,10 +702,7 @@ plot_figures_2 = function(TN_contexts, cat, name) {
   
   
   # supplementary plot 
-  
   supp_plot = ggarrange(simulation_plot + theme(legend.position = "bottom"), histogram_fisher, labels = c("A", "B"), nrow = 2, heights = c(1.5, 1))
-  
-  
   
   plot_list = list(seqlogo = F3a_seqlogo_plots, dinuc_freqs = F3c_dinuc_frequencies, 
                    dinuc_enrichment = F3d_dinc_enrichment, motif_enrichment = F3b_position_enrichment, 
@@ -721,20 +712,19 @@ plot_figures_2 = function(TN_contexts, cat, name) {
   return(list(total_plot = total_plot, supp_plot = supp_plot,  plot_list = plot_list))
 }
 
-# plot the figures
+# plot figure 2
 plot_PTA = plot_figures_2(contexts_TN_PTA, cat = cat_PTA, name = 'PTA')
-fig_2 = annotate_figure(plot_PTA$total_plot, fig.lab  = "         PTA", fig.lab.size = 15)
-ggsave("Output/Figures/Figure_2.pdf", fig_2, width = 15, height = 11.5)
-ggsave("Output/Figures/Figure_2.png", fig_2, width = 15, height = 11.5)
+ggsave("Output/Figures/Figure_2.pdf", plot_PTA$total_plot, width = 15, height = 11.5)
+ggsave("Output/Figures/Figure_2.png", plot_PTA$total_plot, width = 15, height = 11.5)
 
-plot_CE = plot_figures_2(contexts_TN_CE, cat = cat_CE, name = 'Clonal Expansion')
-fig_S3 = annotate_figure(plot_CE$total_plot, fig.lab  = "         Clonal Expansion", fig.lab.size = 15)
-ggsave("Output/Figures/Fig_S3.pdf", fig_S3, width = 12, height = 10)
-ggsave("Output/Figures/Fig_S3.png", fig_S3, width = 12, height = 10)
+# plot figure S3
+pCE = plot_figures_2(contexts_TN_CE, cat = cat_CE, name = 'Clonal Expansion')
+ggsave("Output/Figures/Fig_S3.pdf", pCE$total_plot, width = 14, height = 11.5)
+ggsave("Output/Figures/Fig_S3.png", pCE$total_plot, width = 14, height = 11.5)
 
 supp_figure_4 = ggarrange(plot_PTA$plot_list$supplementary_figure_4, 
-          ggarrange(plot_CE$plot_list$supplementary_figure_4, plot_spacer()  + bgcolor("white")), 
+          ggarrange(pCE$plot_list$supplementary_figure_4, plot_spacer()  + bgcolor("white")), 
           nrow = 2, labels = c("A", "B"))
-ggsave("Output/Figures/Fig_S4.pdf", supp_figure_4, width = 8, height = 10)
-ggsave("Output/Figures/Fig_S4.png", supp_figure_4, width = 8, height = 10)
+ggsave("Output/Figures/Fig_S4.pdf", supp_figure_4, width = 8, height = 6)
+ggsave("Output/Figures/Fig_S4.png", supp_figure_4, width = 8, height = 6)
 
