@@ -148,7 +148,7 @@ plot_figure_2 = function(cat, mut_mat, name){
     theme_BM() +
     geom_pwc(aes(group = injection), method = "dunn_test", p.adjust.method =  "fdr", label = "p.adj.format") +
     scale_fill_manual(values = c("#545863", "#00e8fc", "#f96e46", "#f9c846", "#ffe3e3")) +
-    scale_y_continuous(limits = c(0, max(fit_res_clones$value)*1.35)) +
+    scale_y_continuous(limits = c(0, max(fit_res_clones$value)*1.30)) +
     labs(subtitle = subtitle, y = "Relative ID18 contribution", x = "") +
     theme(legend.position =  "none", axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) 
   
