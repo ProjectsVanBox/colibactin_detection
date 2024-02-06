@@ -722,9 +722,9 @@ pCE = plot_figures_2(contexts_TN_CE, cat = cat_CE, name = 'Clonal Expansion')
 ggsave("Output/Figures/Fig_S3.pdf", pCE$total_plot, width = 14, height = 11.5)
 ggsave("Output/Figures/Fig_S3.png", pCE$total_plot, width = 14, height = 11.5)
 
-supp_figure_4 = ggarrange(plot_PTA$plot_list$supplementary_figure_4, 
-          ggarrange(pCE$plot_list$supplementary_figure_4, plot_spacer()  + bgcolor("white")), 
-          nrow = 2, labels = c("A", "B"))
-ggsave("Output/Figures/Fig_S4.pdf", supp_figure_4, width = 8, height = 6)
-ggsave("Output/Figures/Fig_S4.png", supp_figure_4, width = 8, height = 6)
+supp_figure_4 = ggarrange(plot_PTA$supp_plot, 
+          ggarrange(pCE$supp_plot, plot_spacer()  + bgcolor("white")), 
+          nrow = 4, labels = c("A", "B", "C", "D"))
+ggsave("Output/Figures/Fig_S4.pdf", supp_figure_4, width = 8, height = 11)
+ggsave("Output/Figures/Fig_S4.png", supp_figure_4, width = 8, height = 11)
 
