@@ -1,1 +1,5 @@
 *.user
+.Rproj.user
+**/*.pdf
+**/*.png
+

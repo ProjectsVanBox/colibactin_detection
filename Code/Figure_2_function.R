@@ -702,12 +702,12 @@ plot_figures_2 = function(TN_contexts, cat, name) {
   
   
   # supplementary plot 
-  supp_plot = ggarrange(simulation_plot + theme(legend.position = "bottom"), histogram_fisher, labels = c("A", "B"), nrow = 2, heights = c(1.5, 1))
+  supp_plot = ggarrange(simulation_plot + theme(legend.position = "right"), histogram_fisher, nrow = 2, heights = c(1.5, 1))
   
   plot_list = list(seqlogo = F3a_seqlogo_plots, dinuc_freqs = F3c_dinuc_frequencies, 
                    dinuc_enrichment = F3d_dinc_enrichment, motif_enrichment = F3b_position_enrichment, 
                    stepwise_trinucs = F3f_stepwise_trinucs, mixture_plot = F3g_mixture_plot_EcN, AA_profile = F3e_AA_context_profile, 
-                   simulation_plot = simulation_plot, supplementary_figure_4 = supplementary_figure_4)
+                   simulation_plot = simulation_plot, histogram_fisher = histogram_fisher, supplementary_figure_4 = supplementary_figure_4)
   
   return(list(total_plot = total_plot, supp_plot = supp_plot,  plot_list = plot_list))
 }
@@ -727,4 +727,18 @@ supp_figure_4 = ggarrange(plot_PTA$supp_plot,
           nrow = 4, labels = c("A", "B", "C", "D"))
 ggsave("Output/Figures/Fig_S4.pdf", supp_figure_4, width = 8, height = 11)
 ggsave("Output/Figures/Fig_S4.png", supp_figure_4, width = 8, height = 11)
+
+
+# get the output for the new fused supplementary Figure: 
+supp_fig_list = list(plot_PTA$plot_list$simulation_plot, pCE$plot_list$simulation_plot,
+                     plot_PTA$plot_list$histogram_fisher, pCE$plot_list$histogram_fisher)
+supp_fig_list = lapply(supp_fig_list, \(x) x + theme(plot.margin = unit(c(12, 4, 12, 4), "mm")))
+
+bottom_supp_figure = cowplot::plot_grid(supp_fig_list[[1]], supp_fig_list[[2]],
+                                        supp_fig_list[[3]], supp_fig_list[[4]], labels = c("H", "J", "I", "K"), rel_widths = c(1.65,1))
+
+new_combined_fig = ggarrange(pCE$total_plot, bottom_supp_figure, nrow = 2, heights = c(1.5,1))
+ggsave("Output/Figures/Fig_S2_new.pdf", new_combined_fig, width = 13, height = 19)
+ggsave("Output/Figures/Fig_S2_new.png", new_combined_fig, width = 13, height = 19)
+
 

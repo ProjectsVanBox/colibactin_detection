@@ -2,7 +2,7 @@
 # Nissle Figure 2
 # Axel Rosendahl Huber 13-12-2023
 setwd("C:/Users/Axel Rosendahl Huber/OneDrive/Nissle_manuscript/Nissle/")
-library(gtools)
+# library(gtools)
 source("Code//Load_data.R")
 source("Code/Functions/Utils.R")
 
