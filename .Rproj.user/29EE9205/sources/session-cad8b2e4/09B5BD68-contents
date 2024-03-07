@@ -1,0 +1,217 @@
+# NOTE: This part of the script uses patient-level somatic variant and clinical data which have been obtained from the Hartwig Medical Foundation under the data request number DR-084. Somatic variant and clinical data are freely available for academic use from the Hartwig Medical Foundation through standardized procedures. Privacy and publication policies, including co-authorship policies, can be retrieved from: https://www.hartwigmedicalfoundation.nl/en/data-policy/. 
+# Data request forms can be downloaded from https://www.hartwigmedicalfoundation.nl/en/data/data-access-request/.
+# To gain access to the data, this data request form should be emailed to info@hartwigmedicalfoundation.nl., upon which it will be evaluated within 6 weeks by the HMF Scientific Council and an independent Data Access Board.
+# When access is granted, the requested data become available through a download link provided by HMF.
+
+# USAGE: 
+# 1. Clone the "https://github.com/ProjectsVanBox/colibactin_detection" repository or download as .zip file
+# Set the working directory in the 'setwd()' function as the working directory of this script in the following line and you should be good to go:
+setwd("C:/Users/Axel Rosendahl Huber/OneDrive/Nissle_manuscript/Nissle/")
+
+# Figure 4 results
+library(ggsci)
+library(rstatix)
+setwd("C:/Users/Axel Rosendahl Huber/Documents/Shared/vanBoxtelLab (Groupfolder)/Projects/Axel/Nissle/Analysis/")
+source("C:/Users/Axel Rosendahl Huber/Documents/Shared/vanBoxtelLab (Groupfolder)/Projects/Axel/Nissle/Analysis/Scripts/Load_data.R")
+# get relative AA values for each sample (dinuc mat has the same order)
+metadata$AA = prop.table(as.matrix(dinuc_mat),1)[,"AA"]
+metadata$AA_exome[match(rownames(dinuc_exome), metadata$sampleId)] = prop.table(as.matrix(dinuc_exome),1)[,"AA"]
+
+# fisher test against all other samples 
+dinuc_mat_order = dinuc_mat[metadata$sampleId,]
+
+# SBS re-fitting
+metadata$SBS88 = sbs_contri["SBS88", match(metadata$sampleId, colnames(sbs_contri))] %>% as.numeric()
+metadata$MMR = colSums(sbs_contri[c("SBS6", "SBS14", "SBS15", "SBS20", "SBS21", "SBS26", "SBS44"),  match(metadata$sampleId, colnames(sbs_contri))])
+metadata$ID18 = id_contri[ "ID18", match(metadata$sampleId, colnames(id_contri))] %>% as.numeric()
+metadata$Sig_classification = ifelse(metadata$SBS88 > 0.05 & metadata$ID18 > 0.05, "sig+", "sig-")
+metadata$Motif_selection = ifelse(metadata$log_p_wgs > 3 & metadata$AA > 0.22, "motif+","motif-")
+metadata$Motif_Sig = paste0(metadata$Motif_selection, "/", metadata$Sig_classification)
+table(metadata$Motif_Sig)
+table(metadata$primaryTumorLocation)
+
+# select tissues with > 1 case of colibactin presence 
+tissues = table(metadata$Motif_selection, metadata$primaryTumorLocation)
+recurrent_tissues = colnames(tissues)[tissues[2,] >= 1]
+metadata$rec_tissues = metadata$primaryTumorLocation
+metadata$rec_tissues[!metadata$primaryTumorLocation %in% recurrent_tissues] = "Other"
+table(metadata$rec_tissues)
+table(metadata$primaryTumorLocation[metadata$Motif_selection == "motif+"])
+table(metadata$primaryTumorLocation[metadata$Motif_Sig == "motif-/sig+"])
+
+write.table(metadata, "HMF_metadata_annotated.tsv", sep = "\t", quote = FALSE)
+metadata[metadata$Motif_Sig == "motif-/sig+", ]
+
+# p-value plot: 
+p_value_AA = ggplot(metadata, aes(x = AA, y = log_p_wgs, color = rec_tissues)) + geom_point(alpha = 0.7) + 
+  geom_hline(yintercept = 3) + geom_vline(xintercept = 0.22) + 
+  scale_color_manual(values = c("lightblue", "#d95f02", "#1b9e77",  "#bdbdbd", "#7570b3", "black", "maroon", 'pink', 'violet'), name = "Primary cancer origin") + 
+  scale_shape_discrete(name = "Pks classification", labels = c("pks negative", "pks+ established", "pks+ new")) + 
+  xlab("fraction mutations with AA at\n-3-4 position at pks-sites") + ylab("-log10 p-value") + 
+  theme_classic() 
+
+# p-value plot: 
+p_value_AA_tissue_co = ggplot(metadata, aes(x = AA, y = log_p_wgs, color = Motif_Sig)) + geom_point(alpha = 0.7) + 
+  geom_hline(yintercept = 3) + geom_vline(xintercept = 0.22) + 
+  scale_shape_discrete(name = "Pks classification", labels = c("pks negative", "pks+ established", "pks+ new")) + 
+  xlab("fraction mutations with AA at\n-3-4 position at pks-sites") + ylab("-log10 p-value") + 
+  theme_classic() 
+ggsave("../Manuscript/Figures/Figure_4/p_value_AA_tissue_co.pdf", p_value_AA_tissue_co, width = 5.5, height = 4.5)
+
+
+plot_pairwise_comparisions = metadata %>% 
+  ggplot(aes(x = Motif_Sig, y = AA, fill = Motif_Sig)) + 
+  geom_violin(alpha = 0.7) + 
+  geom_boxplot(width = 0.3) + 
+  geom_pwc(p.adjust.method = "fdr", label = "p.adj") + 
+  theme_bw() + 
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) + 
+  xlab("") + ylab("Fraction of T>N mutations with -3-4AA")
+ggsave("../Manuscript/Figures/Rebuttal_Figure_1.1.png", width = 5, height = 5)
+  
+
+# confusion matrix 
+metadata$pks_fit = "pks-"
+metadata$pks_fit[metadata$Motif_selection == "motif+" & metadata$Sig_classification == "sig+"] = "colibactin_established"
+metadata$pks_fit[metadata$Motif_selection == "motif+" & metadata$Sig_classification == "sig-"] = "colibactin_new"
+conf_mat = table(metadata$Sig_classification, metadata$Motif_selection)
+rownames(conf_mat) = c("Sig-","Sig+"); colnames(conf_mat) =  c("Motif-", "Motif+") # set row and column names
+
+# get the cancer types which are motif+ 
+metadata %>% filter(Motif_selection == "motif+") %>% pull(primaryTumorLocation) %>% table()
+metadata %>% filter(Sig_classification == "sig+") %>% pull(primaryTumorLocation) %>% table()
+metadata %>% filter(Motif_Sig == "motif-/sig+") %>% pull(primaryTumorLocation) %>% table()
+
+
+conf_plot = ggtexttable(conf_mat, theme = ttheme("blank")) %>%
+  tab_add_hline(at.row = 1:2, row.side = "top", linewidth = 2)
+
+
+overview_table = table1::table1( ~ Motif_selection + Sig_classification | rec_tissues , data = metadata)
+png("../Manuscript/Figures/Figure_4/overvieuw_table.png")
+overview_table
+dev.off()
+
+
+# perform fisher exact test for the differnt values 
+fisher.test(conf_mat, alternative = 'greater')$p.value
+fisher.test(conf_mat, alternative = 'less')$p.value
+
+# Todo: Add in 4 colors for the  four different categories: Motif only, Sig only, Motif and sig, and none. 
+# Keep coloring across the different plots the same.  
+
+library(table1)
+library(grid)
+library(gtable)
+library(gridExtra)
+
+# correlation plots 
+# 4 count classification:
+alph = 0.5
+SBS_AA_plot = ggplot(metadata , aes(x = AA, y = SBS88, color = Motif_Sig)) + 
+  geom_point(alpha = alph) + theme_classic() + 
+  theme(legend.position = "none") + xlab("fraction mutations with AA at\n-3-4 position at pks-sites") + 
+  ylab("SBS88 contribution")
+
+ID_AA_plot = ggplot(metadata , aes(x = AA, y = ID18, color = Motif_Sig)) + 
+  geom_point(alpha = alph) +  theme_classic() +
+  theme(legend.position = "none") + xlab("fraction mutations with AA at\n-3-4 position at pks-sites") + 
+  ylab("ID18 contribution")
+
+SBS_ID_plot = ggplot(filter(metadata, rec_tissues != "Colorectum") ,
+                     aes(x = ID18, y = SBS88, color = Motif_Sig)) + 
+  geom_point(alpha = alph) + scale_shape_discrete(name = "Primary cancer origin")  + 
+  geom_point(data = filter(metadata, rec_tissues == "Colorectum") ,
+             aes(x = ID18, y = SBS88, color = Motif_Sig),
+             alpha = alph) + 
+  theme_classic() + ylab("SBS88 contribution") + xlab("ID18 contribution") + 
+    scale_color_discrete(name = "Pks classification")
+
+# generate figure 4 and supplementary figure
+fig4_upper = p_value_AA +  conf_plot + patchwork::plot_spacer()
+fig4_lower = SBS_ID_plot + SBS_AA_plot + ID_AA_plot 
+fig4 = fig4_upper / fig4_lower  + plot_layout(guides = "collect") + plot_annotation(tag_levels = "A")
+
+ggsave("../Manuscript/Figures/Figure_4/Figure_4v3_R.pdf", fig4, width = 10, height = 7)
+ggsave("../Manuscript/Figures/Figure_4/Figure_4v3_R.png", fig4, width = 10, height = 7)
+
+
+# Specificity of the signature - peforming linear regression for each signature and determining the coefficient and p-value?
+rel_contribution  = prop.table(sbs_fit$contribution, 2) %>% t() %>% as.data.frame()
+rel_contribution$AA =  metadata[rownames(rel_contribution), "AA"]
+rel_contribution = as.data.table(rel_contribution, keep.rownames = "sample")
+
+correlation = cor(rel_contribution %>% dplyr::select(-sample))
+cor_pmat = ggcorrplot::cor_pmat(rel_contribution %>% dplyr::select(-sample))
+cor_pmat = p.adjust(cor_pmat["AA",], method = "bonferroni")
+cor_pmat_frame = data.table(signature = rownames(correlation), 
+                            correlation_AA = correlation["AA",],
+                            p_value = cor_pmat)
+cor_pmat_frame %>% arrange(desc(correlation_AA))
+
+correlation["AA",] %>% sort(decreasing = TRUE)
+
+plot(rel_contribution$AA, rel_contribution$SBS28)
+
+#rel_contribution %>% pivot_longer(cols = -c(AA, sample)) %>% filter(AA > 0.3 & value > 0.2)
+
+contribution_data = rel_contribution %>% pivot_longer(cols = c(-AA, -sample)) %>% filter(value > 0.01) %>% filter(AA > 0.1) %>%  
+  mutate(signature = case_match(name, "SBS28" ~ "SBS28",
+                               "SBS88" ~ "SBS88",
+                               "SBS34" ~ "SBS34",
+                               "SBS41" ~ "SBS41", 
+                               "SBS90" ~ "SBS90",
+                               "SBS90" ~ "SBS90", "SBS93" ~ "SBS93",
+                               .default = 'other signature'))
+
+contribution_plot = ggplot(
+  contribution_data, mapping = aes(x = AA, y = value, group = name, color = signature, size = signature))  + 
+  geom_point() + 
+  facet_wrap(signature ~ .) + 
+  scale_color_manual(values = c("grey", "black", "darkgreen", "green", "blue", "red", "orange")) +
+  scale_size_manual(values = c(0.2, 1,1,1,1, 1, 1)) + theme_BM() + 
+  xlab("-3-4AA") + ylab("Signature contribution")
+ggsave("../Manuscript/Figures/Potential_supp_figureX.png", width = 5, height = 4)
+
+contribution_data = rel_contribution %>% filter(SBS88 > 0.02) %>% 
+  pivot_longer(cols = c(-AA, -sample)) %>%  
+  mutate(signature = case_match(name, "SBS28" ~ "SBS28",
+                                "SBS88" ~ "SBS88",
+                                "SBS34" ~ "SBS34",
+                                "SBS41" ~ "SBS41", 
+                                "SBS90" ~ "SBS90",
+                                "SBS90" ~ "SBS90", "SBS93" ~ "SBS93",
+                                .default = 'other signature'))
+
+contribution_plot = ggplot(contribution_data, mapping = aes(x = AA, y = value, group = name, color = signature, size = signature))  + 
+  geom_point() + 
+  scale_color_manual(values = c("grey", "black", "darkgreen", "green", "blue", "red", "orange")) +
+  scale_size_manual(values = c(0.2, 1,1,1,1, 1, 1)) + theme_BM() + 
+  xlab("-3-4AA") + ylab("Signature contribution")
+
+
+contribution_data = rel_contribution %>% filter(SBS88 > 0.02) %>% 
+  pivot_longer(cols = c(-AA, -sample)) %>%  
+  mutate(signature = case_match(name, "SBS88" ~ "SBS88",
+                                .default = 'other signature'))
+
+contribution_plot = ggplot(contribution_data, mapping = aes(x = AA, y = value, group = name, color = signature, size = signature))  + 
+  geom_point() + 
+  scale_color_manual(values = c("grey", "black", "darkgreen", "green", "blue", "red", "orange")) +
+  scale_size_manual(values = c(0.2, 1,1,1,1, 1, 1)) + theme_BM() + 
+  xlab("-3-4AA") + ylab("Signature contribution")
+ggsave("C:/Users/Axel Rosendahl Huber/OneDrive/Nissle_manuscript/Nissle_September23/Figures/Fig_S6/Contribution_plot.pdf", 
+       contribution_plot, width = 5, height = 4)
+
+
+# cor = cor(rel_contribution[,-1])["AA",]
+# cor %>% sort() %>% plot()
+# cor_pmat = as.data.frame(cor_pmat(rel_contribution, alternative = "greater" )["AA",])
+# 
+# cor_pmat = rstatix::adjust_pvalue(cor_pmat, method =  "fdr")
+# cor_pmat$cor_pmat(rel_contribution, alternative = "greater")["AA", ] %>% as.numeric() %>%  sort()
+# 
+# linreg=  lm(AA ~ ., rel_contribution, )
+# summary(linreg)
+
+# write table for Joske: 
