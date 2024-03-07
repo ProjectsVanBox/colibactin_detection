@@ -1,5 +1,12 @@
-# Figure 3 function
+# Figure 2 function
 # function to plot the analyses for figure 3 two times: For PTA-exposed samples and for Clonal expansion
+
+# USAGE: 
+# 1. Clone the "https://github.com/ProjectsVanBox/colibactin_detection" repository or download as .zip file
+# Set the working directory in the 'setwd()' function as the working directory of this script in the following line and you should be good to go:
+setwd("C:/Users/Axel Rosendahl Huber/OneDrive/Nissle_manuscript/Nissle/")
+
+
 library(ggseqlogo)
 library(ggplot2)
 library(gtools)
@@ -9,7 +16,7 @@ library(ggridges)
 library(dtplyr)
 library(tidyverse)
 
-setwd("C:/Users/Axel Rosendahl Huber/OneDrive/Nissle_manuscript/Nissle/")
+# source function and data loading scripts: 
 source("Code/Load_data.R")
 source("Code/Functions/Utils.R")
 source("Code/Functions/Nissle_functions.R")

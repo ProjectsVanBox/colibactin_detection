@@ -1,7 +1,11 @@
-# New figure 2 plotting functions, to easily perform the analysis for both the PTA and the non-PTA samples
-# Nissle Figure 2
-# Axel Rosendahl Huber 13-12-2023
+# Figure 1 plotting functions, to easily perform the analysis for both the PTA and the Clonal Expansion samples
+
+# USAGE: 
+# 1. Clone the "https://github.com/ProjectsVanBox/colibactin_detection" repository or download as .zip file
+# Set the working directory in the 'setwd()' function as the working directory of this script in the following line and you should be good to go:
 setwd("C:/Users/Axel Rosendahl Huber/OneDrive/Nissle_manuscript/Nissle/")
+
+
 source("Code//Load_data.R")
 source("Code/Functions/Utils.R")
 
