@@ -4,7 +4,8 @@
 
 Data and scripts to reproduce the analysis of **Improved detection of colibactin-induced mutations by genotoxic *E. coli* in organoids and colorectal cancer** by Rosendahl Huber, Pleguezuelos-Manzano, Ubels, Puschhof *et al*. published in  *Cancer Cell* 2024. 
 
-https://doi.org/10.1016/j.ccell.2024.02.009
+[![DOI](https://zenodo.org/badge/DOI/10.1016/j.ccell.2024.02.009.svg)](https://doi.org/10.1016/j.ccell.2024.02.009)
+
 #
 
 ### Dependencies: 
