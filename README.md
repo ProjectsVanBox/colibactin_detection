@@ -1,5 +1,8 @@
 # Improved detection of colibactin-induced mutations by genotoxic *E. coli* in organoids and colorectal cancer
 
+
+![image](https://raw.githubusercontent.com/ProjectsVanBox/colibactin_detection/main/Graphical_Abstract.png)
+
 Data and scripts to reproduce the analysis of **Improved detection of colibactin-induced mutations by genotoxic *E. coli* in organoids and colorectal cancer** by Rosendahl Huber, Pleguezuelos-Manzano, Ubels, Puschhof *et al*. published in  *Cancer Cell* 2024. 
 
 https://doi.org/10.1016/j.ccell.2024.02.009
@@ -9,13 +12,13 @@ https://doi.org/10.1016/j.ccell.2024.02.009
 R version 4.2.2 and all packages listed in the [`dependencies.txt`](https://github.com/ProjectsVanBox/colibactin_detection/blob/main/dependencies.tsv) file.
 
 
-### Mutation calls from *pks^+^ E. coli* exposed organoids
-
+### Mutation calls from *pks<sup>+</sup> E. coli* exposed organoids
+- PTA-exposed organoids: 
 
 
 ### Scripts
 1. Study of colibactin-mutagenesis in pks-exposed organoids. 
- Data folder contains .vcf files of organoid cells exposed to different *pks+ E. coli* strains
+ Data folder contains .vcf files of organoid cells exposed to different *pks<sup>+</sup> E. coli* strains
     - [`Figure_1_function.R`](https://github.com/ProjectsVanBox/colibactin_detection/blob/main/Code/Figure_1_function.R) and [`Figure_2_function.R`](https://github.com/ProjectsVanBox/colibactin_detection/blob/main/Code/Figure_2_function.R) scripts
 
 2. Analysis of colibactin exposure in whole-genome cancer data
