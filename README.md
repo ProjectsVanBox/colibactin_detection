@@ -1,10 +1,6 @@
 # Improved detection of colibactin-induced mutations by genotoxic *E. coli* in organoids and colorectal cancer
 
-<<<<<<< HEAD
-<img src="https://raw.githubusercontent.com/ProjectsVanBox/colibactin_detection/main/Graphical_Abstract.png" width=70% height=70%>
-=======
-<img src="https://raw.githubusercontent.com/ProjectsVanBox/colibactin_detection/main/Graphical_Abstract.png" width=30% height=30%>
->>>>>>> 4fe3995d9334a0b41db65edbcbcae7b87e9bdf67
+<img src="https://raw.githubusercontent.com/ProjectsVanBox/colibactin_detection/main/Graphical_Abstract.png" width=60% height=60%>
 
 Data and scripts to reproduce the analysis of **Improved detection of colibactin-induced mutations by genotoxic *E. coli* in organoids and colorectal cancer** by Rosendahl Huber, Pleguezuelos-Manzano, Ubels, Puschhof *et al*. published in  *Cancer Cell* 2024. 
 
