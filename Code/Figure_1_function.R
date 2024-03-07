@@ -1,8 +1,7 @@
-# New figure 2 plotting functions, to easily performa the analysis for both the PTA and the non-PTA samples
+# New figure 2 plotting functions, to easily perform the analysis for both the PTA and the non-PTA samples
 # Nissle Figure 2
 # Axel Rosendahl Huber 13-12-2023
 setwd("C:/Users/Axel Rosendahl Huber/OneDrive/Nissle_manuscript/Nissle/")
-# library(gtools)
 source("Code//Load_data.R")
 source("Code/Functions/Utils.R")
 
@@ -177,7 +176,6 @@ plot_figure_2 = function(cat, mut_mat, name){
     ggtitle("Indels")
   
   fit_res_clones_sbs = fit_res$contribution %>% 
-    # prop.table(2) %>% 
     as.data.frame() %>% rownames_to_column("Signature") %>% 
     pivot_longer(cols = -Signature) %>% 
     filter(Signature == "SBS88")

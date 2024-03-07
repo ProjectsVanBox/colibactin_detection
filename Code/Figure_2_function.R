@@ -728,7 +728,6 @@ supp_figure_4 = ggarrange(plot_PTA$supp_plot,
 ggsave("Output/Figures/Fig_S4.pdf", supp_figure_4, width = 8, height = 11)
 ggsave("Output/Figures/Fig_S4.png", supp_figure_4, width = 8, height = 11)
 
-
 # get the output for the new fused supplementary Figure: 
 supp_fig_list = list(plot_PTA$plot_list$simulation_plot, pCE$plot_list$simulation_plot,
                      plot_PTA$plot_list$histogram_fisher, pCE$plot_list$histogram_fisher)
@@ -740,5 +739,3 @@ bottom_supp_figure = cowplot::plot_grid(supp_fig_list[[1]], supp_fig_list[[2]],
 new_combined_fig = ggarrange(pCE$total_plot, bottom_supp_figure, nrow = 2, heights = c(1.5,1))
 ggsave("Output/Figures/Fig_S2_new.pdf", new_combined_fig, width = 13, height = 19)
 ggsave("Output/Figures/Fig_S2_new.png", new_combined_fig, width = 13, height = 19)
-
-
