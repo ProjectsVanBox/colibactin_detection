@@ -11,11 +11,6 @@ Data and scripts to reproduce the analysis of **Improved detection of colibactin
 ### Dependencies: 
 R version 4.2.2 and all packages listed in the [`dependencies.txt`](https://github.com/ProjectsVanBox/colibactin_detection/blob/main/dependencies.tsv) file.
 
-
-### Mutation calls from *pks<sup>+</sup> E. coli* exposed organoids
-- PTA-exposed organoids: 
-
-
 ### Scripts
 1. Study of colibactin-mutagenesis in pks-exposed organoids. 
  Data folder contains .vcf files of organoid cells exposed to different *pks<sup>+</sup> E. coli* strains
