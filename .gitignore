@@ -1,5 +1,8 @@
 *.user
 .Rproj.user
+<<<<<<< HEAD
 **/*.pdf
 **/*.png
 
+=======
+>>>>>>> e40103eb72060826d98f73a4880dde1b4c2050d4
