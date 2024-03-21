@@ -18,6 +18,8 @@ R version 4.2.2 and all packages listed in the [`dependencies.txt`](https://gith
 
 2. Analysis of colibactin exposure in whole-genome cancer data
     - [`Figure_3.R`](https://github.com/ProjectsVanBox/colibactin_detection/blob/main/Code/Figure_3.R), [`FigureS7A-D.R`](https://github.com/ProjectsVanBox/colibactin_detection/blob/main/Code/FigureS7A-D.R) and [`makeFigure4.R`](https://github.com/ProjectsVanBox/colibactin_detection/blob/main/Code/makeFigure4.R)
+  
+ 3. All scripts for training and running the random forest are in [`randomForest`](https://github.com/ProjectsVanBox/colibactin_detection/blob/main/randomForest) . To classify new data you need the bed files used for feature annotation and the trained models, both of which can be downloaded [`here`](https://surfdrive.surf.nl/files/index.php/s/vxfeQNY4ARwS8sm)
 
 # 
 For any questions or comments about the code, please contact: 
